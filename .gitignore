@@ -1,0 +1,14 @@
+/ChangeDetection_MSCCANet_TGRS2024-main/BCDD/
+/ChangeDetection_MSCCANet_TGRS2024-main/lilBCDD/
+/ChangeDetection_MSCCANet_TGRS2024-main/chart/
+/ChangeDetection_MSCCANet_TGRS2024-main/log/
+/ChangeDetection_MSCCANet_TGRS2024-main/tmp/
+/ChangeDetection_MSCCANet_TGRS2024-main/output_img/
+/ChangeDetection_MSCCANet_TGRS2024-main/metrics.txt
+/ChangeDetection_MSCCANet_TGRS2024-main/.idea/
+/ChangeDetection_MSCCANet_TGRS2024-main/.vscode/
+/STFMamba/wh/
+/STFMamba/__pycache__/
+/STFMamba/datasets/__pycache__/
+/STFMamba/models_mamba/__pycache__/
+/STFMamba/models_mamba/model_VSS/__pycache__/

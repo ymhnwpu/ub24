@@ -1,0 +1,15 @@
+{
+  "patch_size": 128,
+  "augmentation": true,
+  "num_gpus": 1,
+  "num_workers": 12,
+  "num_channel": 3,
+  "EF": false,
+  "epochs": 70,
+  "batch_size": 8,
+  "learning_rate": 4e-4,
+  "loss_function": "hybrid",
+  "dataset_dir": "BCDD/",
+  "weight_dir": "./outputs/",
+  "log_dir": "./log/"
+}
