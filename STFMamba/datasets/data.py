@@ -88,11 +88,13 @@ class PatchSet(Dataset):
         if (self.image_size[1] - PATCH_STRIDE) % PATCH_STRIDE != 0:
             w_index_list.append(self.image_size[1] - self.patch_size)
 
-        self.total_index = 12000
+        # data.py中self.total_index要与prepare_training_data.py中参数--sample_num的值严格保持一致。
+        self.total_index = 10
 
     def __getitem__(self, item):
         images = []
-
+        # PatchSet 类在 getitem 方法中尝试加载从 0 开始的连续编号的 .npy 文件（0.npy, 1.npy, 2.npy, ...），
+        # 每个文件包含 4 个图像，每个图像有 6 个通道。
         im = np.load(os.path.join(self.root_dir, str(item) + '.npy'))
         for i in range(4):
             images.append(im[i * 6: i * 6 + 6, :, :])

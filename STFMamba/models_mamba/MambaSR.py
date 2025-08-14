@@ -1,6 +1,6 @@
 import torch.nn as nn
 from models_mamba.model_VSS.vmamba import LayerNorm2d
-from models_mamba.MambaSRmodel import MambaSRmodel
+from models_mamba.MambaSRmodel_fixed import MambaSRmodel
 import torch.nn as nn
 import torch.nn.functional as F
 

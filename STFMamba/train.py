@@ -14,6 +14,9 @@ import torchvision.models as models
 import torch.distributed
 from model import model_STF
 
+torch.cuda.empty_cache()
+torch.backends.cudnn.benchmark = True
+
 torch.cuda.set_device(0)
 def_device = torch.device('cuda:0')
 
@@ -28,7 +31,15 @@ def get_features(image, model):
 def train(opt, train_dates, test_dates, IMAGE_SIZE, PATCH_SIZE):
     # 加载数据集和模型
     train_set = PatchSet(opt.train_dir, train_dates, IMAGE_SIZE, PATCH_SIZE)
-    train_loader = DataLoader(dataset=train_set, num_workers=4, batch_size=10, shuffle=True)
+    # num_workers——内存占用 batch_size——显存占用
+    train_loader = DataLoader(
+        dataset=train_set,
+        num_workers=2,
+        batch_size=1,
+        shuffle=True,
+        pin_memory=False, # 设为False节省内存
+        persistent_workers=False
+        )
     model = model_STF().cuda()
     # 设置损失函数
     cri_pix = GeneratorLoss()
@@ -45,6 +56,7 @@ def train(opt, train_dates, test_dates, IMAGE_SIZE, PATCH_SIZE):
     # Downloading: "https://download.pytorch.org/models/vgg19-dcbb9e9d.pth" to /home/ymh/.cache/torch/hub/checkpoints/vgg19-dcbb9e9d.pth
     # 下载的VGG19保存到了/home/ymh/.cache/torch/hub/checkpoints/vgg19-dcbb9e9d.pth
     vgg19.eval() # 评估模式不更新vgg19自身的参数
+
     # 训练
     for epoch in tqdm(range(opt.num_epochs)):
         model.train()
@@ -58,20 +70,24 @@ def train(opt, train_dates, test_dates, IMAGE_SIZE, PATCH_SIZE):
             ref_lr = ref_lr.cuda()
             ref_target = ref_target.cuda()
             gt_mask = gt_mask.float().cuda()
+            # 前向传播前显存占用情况
+            print(f"GPU总内存: {torch.cuda.get_device_properties(0).total_memory/1024**3:.1f}GB")
+            print(f"已分配内存: {torch.cuda.memory_allocated()/1024**3:.1f}GB") 
+            print(f"缓存内存: {torch.cuda.memory_reserved()/1024**3:.1f}GB")
             # 前向传播
             SR1,SR2,x1,x2,fusion = model(ref_lr, data, ref_target, def_device)
             optimizer.zero_grad()
             l_re = cri_pix(fusion * gt_mask, target * gt_mask, is_ds=False)
-            l_re_2 = cri_pix(x2 * gt_mask, target * gt_mask, is_ds=False)
+            l_re_2 = cri_pix(x2 * gt_mask, target * gt_mask, is_ds=False)   
             l_re_1 = cri_pix(x1 * gt_mask, target * gt_mask, is_ds=False)
             
             features_pre = get_features(fusion* gt_mask, vgg19)
             features_targrt = get_features(target* gt_mask, vgg19)
             l_vgg = criterion(features_pre, features_targrt)
 
-            l_sr = cri_pix(SR2 * gt_mask, target * gt_mask, is_ds=False)
+            l_sr = cri_pix(SR2 * gt_mask, target * gt_mask, is_ds=False) \
             + cri_pix(SR1 * gt_mask, ref_target * gt_mask, is_ds=False) 
-            l_total = l_sr + l_re + (l_re_1 + l_re_2) + 1e-3*l_vgg 
+            l_total = l_sr + l_re + (l_re_1 + l_re_2) + 1e-3*l_vgg
             # 反向传播和优化
             l_total.backward()
             optimizer.step()
@@ -82,12 +98,14 @@ def train(opt, train_dates, test_dates, IMAGE_SIZE, PATCH_SIZE):
             # 计算批处理时间
             t_end = timer()
             batch_time.update(round(t_end - t_start, 4))
+        # 训练进度 批处理信息 生成器损失 下采样损失 vgg感知损失 批处理时间
         print('[%d/%d][%d/%d] G-Loss: %.4f down-Loss: %.4f vgg-Loss: %.4f Batch_Time: %.4f' % (
             epoch + 1, opt.num_epochs, batches, batches, g_loss.avg, down_loss.avg, vgg_loss.avg, batch_time.avg,
         ))
         scheduler.step()
         # 保存模型
         if epoch%5==0:
+            # 模型保存在experiment_model_pth/model_epoch{epoch}.pth
             torch.save(model.state_dict(), f'{save_dir}model_epoch{epoch}.pth')
 
 def main():
@@ -99,11 +117,10 @@ def main():
     torch.backends.cudnn.deterministic = True
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='Train STFMamba Models')
-    parser.add_argument('--image_size', default=[1000, 1000], type=int, help='the image size (height, width)')
+    parser.add_argument('--image_size', default=[64, 64], type=int, help='the image size (height, width)')
     parser.add_argument('--patch_size', default=128, type=int, help='training images crop size')
-    parser.add_argument('--num_epochs', default=200, type=int, help='train epoch number')
-    parser.add_argument('--root_dir', default='', help='Datasets root directory')
-    parser.add_argument('--train_dir', default='', help='Datasets train directory')
+    parser.add_argument('--num_epochs', default=10, type=int, help='train epoch number')
+    parser.add_argument('--train_dir', default='datasets_training', help='Datasets train directory')
     opt = parser.parse_args()
     IMAGE_SIZE = opt.image_size
     PATCH_SIZE = opt.patch_size
@@ -115,4 +132,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-
+# 命令行：
+# python train.py
+# 或
+# python train.py --train_dir datasets_training

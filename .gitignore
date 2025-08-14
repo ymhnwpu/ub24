@@ -12,8 +12,13 @@
 /ChangeDetection_MSCCANet_TGRS2024-main/.idea/
 /ChangeDetection_MSCCANet_TGRS2024-main/.vscode/
 /ChangeDetection_MSCCANet_TGRS2024-main/models/__pycache__/
-/STFMamba/wh/
+/ChangeDetection_MSCCANet_TGRS2024-main/utils/__pycache__/
 /STFMamba/__pycache__/
+/STFMamba/.vscode/
+/STFMamba/datasets/wh/test/
 /STFMamba/datasets/__pycache__/
 /STFMamba/models_mamba/__pycache__/
 /STFMamba/models_mamba/model_VSS/__pycache__/
+/STFMamba/datasets_npy/
+/STFMamba/datasets_training/
+/STFMamba/experiment_model_pth/

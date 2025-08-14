@@ -11,8 +11,10 @@ class model_STF(nn.Module):
             patch_size=4, 
             in_chans= 6, 
             num_classes=1000, 
-            depths=[2, 2, 9, 2], 
-            dims=96, 
+            depths=[2, 2, 9, 2],
+            # depths=[2, 2, 4, 2],
+            dims=96,
+            # dims=32,
             # ===================
             ssm_d_state=16,
             ssm_ratio=2.0,
@@ -23,7 +25,7 @@ class model_STF(nn.Module):
             ssm_conv_bias=True,
             ssm_drop_rate=0.0,
             ssm_init="v0",
-            forward_type="v2",
+            forward_type="v01",
             # ===================
             mlp_ratio=4.0,
             mlp_act_layer="gelu",
@@ -36,6 +38,8 @@ class model_STF(nn.Module):
             patchembed_version="v2",
             gmlp=False,
             use_checkpoint=False,
+            # 设置为True时启用梯度检查点，用计算时间换取内存空间
+            # use_checkpoint=True,
             )
         
         self.model_fusion = STFMamba(
@@ -44,7 +48,9 @@ class model_STF(nn.Module):
             in_chans= 6, 
             num_classes=1000, 
             depths=[2, 2, 9, 2], 
-            dims=96, 
+            # depths=[2, 2, 4, 2],
+            dims=96,
+            # dims=32,
             # ===================
             ssm_d_state=16,
             ssm_ratio=2.0,
@@ -55,7 +61,7 @@ class model_STF(nn.Module):
             ssm_conv_bias=True,
             ssm_drop_rate=0.0,
             ssm_init="v0",
-            forward_type="v2",
+            forward_type="v01",
             mlp_ratio=4.0,
             mlp_act_layer="gelu",
             mlp_drop_rate=0.0,
@@ -65,7 +71,9 @@ class model_STF(nn.Module):
             downsample_version="v2",
             patchembed_version="v2",
             gmlp=False,
-            use_checkpoint=False,
+            # use_checkpoint=False,
+            # 设置为True时用计算时间换取内存空间
+            use_checkpoint=True,
             )
         
         self.cross_fusion = Cross_MultiAttention(in_channels=6, emb_dim=16, num_heads=4) 

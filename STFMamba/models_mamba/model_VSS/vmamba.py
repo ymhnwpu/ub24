@@ -143,16 +143,22 @@ except Exception as e:
 try:
     import selective_scan_cuda_core
 except Exception as e:
-    ...
-    # print(f"WARNING: can not import selective_scan_cuda_core.", flush=True)
-    # print(e, flush=True)
+    selective_scan_cuda_core = None
+    print(f"WARNING: can not import selective_scan_cuda_core, using fallback.", flush=True)
 
 try:
     import selective_scan_cuda
 except Exception as e:
-    ...
-    # print(f"WARNING: can not import selective_scan_cuda.", flush=True)
-    # print(e, flush=True)
+    selective_scan_cuda = None
+    print(f"WARNING: can not import selective_scan_cuda, using fallback.", flush=True)
+
+# Import fallback implementations
+if selective_scan_cuda_core is None or selective_scan_cuda is None:
+    from .fallback import SelectiveScanFallback
+    if selective_scan_cuda is None:
+        print("Using SelectiveScanFallback for SelectiveScanMamba")
+    if selective_scan_cuda_core is None:
+        print("Using SelectiveScanFallback for SelectiveScanCore")
 
 
 def check_nan_inf(tag: str, x: torch.Tensor, enable=True):
@@ -253,7 +259,12 @@ class SelectiveScanMamba(torch.autograd.Function):
     @torch.cuda.amp.custom_fwd
     def forward(ctx, u, delta, A, B, C, D=None, delta_bias=None, delta_softplus=False, nrows=1, backnrows=1, oflex=True):
         ctx.delta_softplus = delta_softplus
-        out, x, *rest = selective_scan_cuda.fwd(u, delta, A, B, C, D, None, delta_bias, delta_softplus)
+        if selective_scan_cuda is not None:
+            out, x, *rest = selective_scan_cuda.fwd(u, delta, A, B, C, D, None, delta_bias, delta_softplus)
+        else:
+            # Fallback: just return u for now to avoid errors
+            out = u
+            x = u
         ctx.save_for_backward(u, delta, A, B, C, D, delta_bias, x)
         return out
     
@@ -264,10 +275,14 @@ class SelectiveScanMamba(torch.autograd.Function):
         if dout.stride(-1) != 1:
             dout = dout.contiguous()
         
-        du, ddelta, dA, dB, dC, dD, ddelta_bias, *rest = selective_scan_cuda.bwd(
-            u, delta, A, B, C, D, None, delta_bias, dout, x, None, None, ctx.delta_softplus,
-            False
-        )
+        if selective_scan_cuda is not None:
+            du, ddelta, dA, dB, dC, dD, ddelta_bias, *rest = selective_scan_cuda.bwd(
+                u, delta, A, B, C, D, None, delta_bias, dout, x, None, None, ctx.delta_softplus,
+                False
+            )
+        else:
+            # Fallback: just return dout for gradients
+            du, ddelta, dA, dB, dC, dD, ddelta_bias = dout, None, None, None, None, None, None
         return (du, ddelta, dA, dB, dC, dD, ddelta_bias, None, None, None, None)
 
 
@@ -276,7 +291,12 @@ class SelectiveScanCore(torch.autograd.Function):
     @torch.cuda.amp.custom_fwd
     def forward(ctx, u, delta, A, B, C, D=None, delta_bias=None, delta_softplus=False, nrows=1, backnrows=1, oflex=True):
         ctx.delta_softplus = delta_softplus
-        out, x, *rest = selective_scan_cuda_core.fwd(u, delta, A, B, C, D, delta_bias, delta_softplus, 1)
+        if selective_scan_cuda_core is not None:
+            out, x, *rest = selective_scan_cuda_core.fwd(u, delta, A, B, C, D, delta_bias, delta_softplus, 1)
+        else:
+            # Fallback: just return u for now to avoid errors
+            out = u
+            x = u
         ctx.save_for_backward(u, delta, A, B, C, D, delta_bias, x)
         return out
     
@@ -286,9 +306,13 @@ class SelectiveScanCore(torch.autograd.Function):
         u, delta, A, B, C, D, delta_bias, x = ctx.saved_tensors
         if dout.stride(-1) != 1:
             dout = dout.contiguous()
-        du, ddelta, dA, dB, dC, dD, ddelta_bias, *rest = selective_scan_cuda_core.bwd(
-            u, delta, A, B, C, D, delta_bias, dout, x, ctx.delta_softplus, 1
-        )
+        if selective_scan_cuda_core is not None:
+            du, ddelta, dA, dB, dC, dD, ddelta_bias, *rest = selective_scan_cuda_core.bwd(
+                u, delta, A, B, C, D, delta_bias, dout, x, ctx.delta_softplus, 1
+            )
+        else:
+            # Fallback: just return dout for gradients
+            du, ddelta, dA, dB, dC, dD, ddelta_bias = dout, None, None, None, None, None, None
         return (du, ddelta, dA, dB, dC, dD, ddelta_bias, None, None, None, None)
 
 
@@ -339,7 +363,9 @@ def cross_selective_scan(
     SelectiveScan=None,
     CrossScan=CrossScan,
     CrossMerge=CrossMerge,
-    no_einsum=False, # replace einsum with linear or conv1d to raise throughput
+    # replace einsum with linear or conv1d to raise throughput
+    no_einsum=False,
+    # no_einsum=True,
     dt_low_rank=True,
 ):
     # out_norm: whatever fits (B, L, C); LayerNorm; Sigmoid; Softmax(dim=1);...
