@@ -60,7 +60,7 @@ parser, metadata = get_parser_with_args()
 
 # 循环评估多个模型
 for i in model_list:    
-    path = path_in+'/best_val_checkpoint_epoch_'+str(i+1)+'.pt'   # the path of the model
+    path = path_in+'/best_val_checkpoint_epoch_'+str(i)+'.pt'   # the path of the model
     model_name = "checkpoint_epoch_"+str(i)
     print(model_name+" is testing...")
     model = torch.load(path)
