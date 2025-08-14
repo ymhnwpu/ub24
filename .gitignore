@@ -3,10 +3,15 @@
 /ChangeDetection_MSCCANet_TGRS2024-main/chart/
 /ChangeDetection_MSCCANet_TGRS2024-main/log/
 /ChangeDetection_MSCCANet_TGRS2024-main/tmp/
+!/ChangeDetection_MSCCANet_TGRS2024-main/tmp/best_test_checkpoint_epoch_54.pt
+!/ChangeDetection_MSCCANet_TGRS2024-main/tmp/best_val_checkpoint_epoch_54.pt
+!/ChangeDetection_MSCCANet_TGRS2024-main/tmp/metadata_best_test_checkpoint_epoch_54.json
+!/ChangeDetection_MSCCANet_TGRS2024-main/tmp/metadata_best_val_checkpoint_epoch_54.json
 /ChangeDetection_MSCCANet_TGRS2024-main/output_img/
 /ChangeDetection_MSCCANet_TGRS2024-main/metrics.txt
 /ChangeDetection_MSCCANet_TGRS2024-main/.idea/
 /ChangeDetection_MSCCANet_TGRS2024-main/.vscode/
+/ChangeDetection_MSCCANet_TGRS2024-main/models/__pycache__/
 /STFMamba/wh/
 /STFMamba/__pycache__/
 /STFMamba/datasets/__pycache__/
