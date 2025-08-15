@@ -17,6 +17,8 @@ opt = parser.parse_args()
 
 dev = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+# 加载测试集的路径为 dataset/test/，其中 dataset 是 metadata.json 文件中 dataset_dir 的值
+# 测试集加载流程：helpers.py的get_test_loaders() -> dataloaders.py的full_test_loader()
 test_loader = get_test_loaders(opt, batch_size=1)
 
 # the path of the model

@@ -1,15 +1,19 @@
-import os
 import json
-def load_training_history(path):
-    """加载历史训练数据用于断点续训"""
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            history = json.load(f)
-        return history
-    return None
 
-history = load_training_history('./tmp/train/training_history.json')
-# print(history['test_loss'])
-# print(len(history['test_loss']))
-for i in history:
-    print(i, len(history[i]))
+# 读取training_history.json文件
+with open('./tmp/train/training_history.json', 'r') as f:
+    history = json.load(f)
+
+# 打印各个指标的原始长度
+print("Original length of each metric in training_history.json:")
+for key, value in history.items():
+    print(f"{key}: {len(value)}")
+
+# 仅保留前55个元素（下标0到54），并写会文件
+# print("\nAfter keeping only the first 55 elements (index 0-54):")
+# for key, value in history.items():
+#     history[key] = value[:55]
+#     print(f"{key}: {len(history[key])}")
+# with open('./tmp/train/training_history.json', 'w') as f:
+#     json.dump(history, f)
+# print("\ntraining_history.json has been updated with only the first 55 elements for each metric.")

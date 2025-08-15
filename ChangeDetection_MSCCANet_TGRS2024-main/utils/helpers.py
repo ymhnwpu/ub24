@@ -105,11 +105,13 @@ def get_loaders(opt):
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=opt.batch_size,
                                                shuffle=True,
-                                               num_workers=opt.num_workers)
+                                               num_workers=opt.num_workers,
+                                               pin_memory=True) # pin_memory=True is used to speed up data transfer to GPU
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=opt.batch_size,
                                              shuffle=False,
-                                             num_workers=opt.num_workers)
+                                             num_workers=opt.num_workers,
+                                             pin_memory=True) # pin_memory=True is used to speed up data transfer to GPU
     return train_loader, val_loader
 
 def get_test_loaders(opt, batch_size=None):
